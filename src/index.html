@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css"
+          href="styles/dialog-polyfill.css"/>
+    <script src="scripts/dialog-polyfill.js"></script>
+    <script>
+      let electron = require('electron');
+      let currentWindow = electron.remote.getCurrentWindow();
+
+      console.log(currentWindow.custom);
+      let favorites_db = currentWindow.custom['favorites_db'];
+      console.log(favorites_db);
+    </script>
+
+    <script>
+      // let favorites_db = document.getCurrentWindow().favorites_db;
+      // favorites_db
+    </script>
+    <link rel="import" href="parts/header.html">
+    <!--<link rel="import" href="parts/listeners.js">-->
+    <!--<link rel="stylesheet" type="text/css" href="styles/fab_position.css">-->
+    <!--<link rel="stylesheet" type="text/css" href="styles/material.css">-->
+    <style>
+        #add_page {
+            position: fixed;
+            display: block;
+            right: 0;
+            bottom: 0;
+            margin-right: 40px;
+            margin-bottom: 40px;
+            z-index: 900;
+        }
+
+        dialog {
+            position: fixed;
+            top: 50%;
+            transform: translate(0, -50%);
+        }
+    </style>
+    <script>
+      let cardsContainer;
+
+      function getCardsContainer() {
+        if (cardsContainer == null) {
+          cardsContainer = document.getElementById("cards");
+        }
+        return cardsContainer
+      }
+
+      function makeCard(cardTitle, supportingTxt, link, linkText) {
+        //Card
+        let nuCard = document.createElement("DIV");
+        nuCard.className = "demo-updates mdl-card mdl-shadow--2dp mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-cell--12-col-desktop";
+
+        //Card.div(title)
+        let nuTitleDiv = document.createElement("DIV");
+        nuTitleDiv.className = "mdl-card__title mdl-card--expand mdl-color--teal-300";
+
+        //Card.div(title).text
+        let nuTitleH = document.createElement("H2");
+        nuTitleH.className = "mdl-card__title-text";
+        nuTitleH.innerHTML = cardTitle;
+
+        //Card.div(supporting text)
+        let nuSupportingTxtDiv = document.createElement("DIV");
+        nuSupportingTxtDiv.className = "mdl-card__supporting-text mdl-color-text--grey-600";
+        nuSupportingTxtDiv.innerHTML = supportingTxt;
+
+        //Card.div(open link)
+        let nuOpenLinkDiv = document.createElement("DIV");
+        nuOpenLinkDiv.className = "mdl-card__actions mdl-card--border";
+
+        //Card.div(open link).a(link)
+        let nuOpenLinkA = document.createElement("A");
+        nuOpenLinkA.className = "mdl-button mdl-js-button mdl-js-ripple-effect";
+        nuOpenLinkA.href = link;
+        nuOpenLinkA.innerHTML = linkText;
+
+
+        nuCard.appendChild(nuTitleDiv);
+        nuCard.appendChild(nuSupportingTxtDiv);
+        nuCard.appendChild(nuOpenLinkDiv);
+
+        nuTitleDiv.appendChild(nuTitleH);
+        nuOpenLinkDiv.appendChild(nuOpenLinkA);
+
+        return nuCard
+      }
+    </script>
+    <script>
+      let sideBarPagesContainer;
+
+      function getsideBarPagesContainer() {
+        if (sideBarPagesContainer == null) {
+          sideBarPagesContainer = document.getElementById("sideBarPagesContainer");
+        }
+        return sideBarPagesContainer
+      }
+
+      function makeSidebarPage(icon, text, link) {
+        //nuSidebarPage
+        let nuSidebarPage = document.createElement("A");
+        nuSidebarPage.className = "mdl-navigation__link";
+        nuSidebarPage.href = link;
+
+        //nuSidebarPage.i(icon)
+        let nuIcon = document.createElement("i");
+        nuIcon.className = "mdl-color-text--blue-grey-400 material-icons";
+        nuIcon.role = "presentation";
+        nuIcon.innerHTML = icon;
+
+        //nuSidebarPage.text
+        nuSidebarPage.innerHTML = text;
+
+        nuSidebarPage.appendChild(nuIcon);
+
+        return nuSidebarPage
+      }
+    </script>
+    <script>
+
+      function enableDialog() {
+        let addPageFab = document.getElementById('add_page_fab');
+
+        addPageFab.addEventListener('click', function () {
+          dialog.showModal();
+        });
+
+        let dialog = document.getElementById('nu-page-dialog');
+        if (!dialog.showModal) {
+          dialogPolyfill.registerDialog(dialog);
+        }
+
+        // dismiss on outside click
+        dialog.addEventListener('click', function (event) {
+          var rect = dialog.getBoundingClientRect();
+          var isInDialog = (rect.top <= event.clientY && event.clientY <= rect.top + rect.height && rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
+          if (!isInDialog) {
+            dialog.close();
+          }
+        });
+
+        // dialog.querySelector('.close').addEventListener('click', function () {
+        //   dialog.close();
+        // });
+      }
+
+      function addPage(mk1, mk2, mk3, mk4, ms1, ms2, ms3) {
+        let card = makeCard("SampleExample", "This is supporting text example", "https://www.google.com", "Google!");
+        getCardsContainer().appendChild(card);
+        let sbp = makeSidebarPage("home", "Google!", "https://www.google.com");
+        getsideBarPagesContainer().appendChild(sbp)
+      }
+
+      document.addEventListener("DOMContentLoaded", enableDialog);
+
+      function restorePrevious() {
+        favorites_db.find({}, function (err, docs) {
+          let arrayLength = docs.length;
+          for (let ctr = 0; ctr < arrayLength; ctr++) {
+            alert(docs[ctr]);
+            let fav_url = docs["fav_url"];
+            let fav_nick = docs["fav_nick"];
+            let fav_descr = docs["fav_descr"];
+            addPage(fav_nick, fav_descr, fav_url, fav_nick, "home", fav_nick, fav_url);
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", restorePrevious);
+
+      document.addEventListener('submit', function (e) {
+        e.preventDefault();
+        let formData = new FormData(e.target);
+        let fav_url = formData.get("fav_url");
+        let fav_nick = formData.get("fav_nick");
+        let fav_descr = formData.get("fav_descr");
+
+        addPage(fav_nick, fav_descr, fav_url, fav_nick, "home", fav_nick, fav_url);
+
+        let rec = {
+          fav_url: fav_url,
+          fav_nick: fav_nick,
+          fav_descr: fav_descr
+        };
+
+        favorites_db.insert(rec);
+
+        document.getElementById('nu-page-dialog').close();
+
+
+      });
+    </script>
+
+</head>
+<body id="body">
+<dialog id="nu-page-dialog" class="mdl-dialog">
+    <h4 class="mdl-dialog__title">Insert Site Details Here</h4>
+    <form action="#" id="nu_page_form">
+        <div class="mdl-dialog__content">
+            <!--"SampleExample", "This is supporting text example", "https://www.google.com", "Google!");"home", "Google!", "https://www.google.com");-->
+
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="fav_url">
+                <label class="mdl-textfield__label" for="fav_url">URL</label>
+            </div>
+
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="fav_nick">
+                <label class="mdl-textfield__label" for="fav_nick">Nickname</label>
+            </div>
+
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="fav_descr">
+                <label class="mdl-textfield__label" for="fav_descr">Description</label>
+            </div>
+
+        </div>
+        <div class="mdl-dialog__actions">
+            <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" type="submit"
+                    name="add_page">Add Page
+            </button>
+        </div>
+    </form>
+    <!--onclick="addPage();"-->
+</dialog>
+
+<div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
+    <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600">
+        <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">Home</span>
+            <div class="mdl-layout-spacer"></div>
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+                <label class="mdl-button mdl-js-button mdl-button--icon" for="search">
+                    <i class="material-icons">search</i>
+                </label>
+                <div class="mdl-textfield__expandable-holder">
+                    <input class="mdl-textfield__input" type="text" id="search">
+                    <label class="mdl-textfield__label" for="search">Enter your query...</label>
+                </div>
+            </div>
+            <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="hdrbtn">
+                <i class="material-icons">more_vert</i>
+            </button>
+            <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect mdl-menu--bottom-right" for="hdrbtn">
+                <li class="mdl-menu__item">About</li>
+                <li class="mdl-menu__item">Contact</li>
+                <li class="mdl-menu__item">Legal information</li>
+            </ul>
+        </div>
+    </header>
+    <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50">
+        <header class="demo-drawer-header">
+            <img src="images/user.jpg" class="demo-avatar">
+            <div class="demo-avatar-dropdown">
+                <span>hello@example.com</span>
+                <div class="mdl-layout-spacer"></div>
+                <button id="accbtn" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <i class="material-icons" role="presentation">arrow_drop_down</i>
+                    <span class="visuallyhidden">Accounts</span>
+                </button>
+                <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="accbtn">
+                    <li class="mdl-menu__item">hello@example.com</li>
+                    <li class="mdl-menu__item">info@example.com</li>
+                    <li class="mdl-menu__item"><i class="material-icons">add</i>Add another account...</li>
+                </ul>
+            </div>
+        </header>
+        <nav id="sideBarPagesContainer" class="demo-navigation mdl-navigation mdl-color--blue-grey-800">
+            <!--sidebar pages go here!-->
+        </nav>
+    </div>
+    <main class="mdl-layout__content mdl-color--grey-100">
+        <div class="mdl-grid demo-content">
+            <div id="cards"
+                 class="demo-cards mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-grid mdl-grid--no-spacing">
+
+                <!--<div class="demo-updates mdl-card mdl-shadow&#45;&#45;2dp mdl-cell mdl-cell&#45;&#45;4-col mdl-cell&#45;&#45;4-col-tablet mdl-cell&#45;&#45;12-col-desktop">-->
+                <!--<div class="mdl-card__title mdl-card&#45;&#45;expand mdl-color&#45;&#45;teal-300">-->
+                <!--<h2 class="mdl-card__title-text">Updates</h2>-->
+                <!--</div>-->
+                <!--<div class="mdl-card__supporting-text mdl-color-text&#45;&#45;grey-600">-->
+                <!--Non dolore elit adipisicing ea reprehenderit consectetur culpa.-->
+                <!--</div>-->
+                <!--<div class="mdl-card__actions mdl-card&#45;&#45;border">-->
+                <!--<a href="#" class="mdl-button mdl-js-button mdl-js-ripple-effect">Read More</a>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="demo-separator mdl-cell&#45;&#45;1-col"></div>-->
+                <!--<div class="demo-options mdl-card mdl-color&#45;&#45;deep-purple-500 mdl-shadow&#45;&#45;2dp mdl-cell mdl-cell&#45;&#45;4-col mdl-cell&#45;&#45;3-col-tablet mdl-cell&#45;&#45;12-col-desktop">-->
+                <!--<div class="mdl-card__supporting-text mdl-color-text&#45;&#45;blue-grey-50">-->
+                <!--<h3>View options</h3>-->
+                <!--<ul>-->
+                <!--<li>-->
+                <!--<label for="chkbox1" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">-->
+                <!--<input type="checkbox" id="chkbox1" class="mdl-checkbox__input">-->
+                <!--<span class="mdl-checkbox__label">Click per object</span>-->
+                <!--</label>-->
+                <!--</li>-->
+                <!--<li>-->
+                <!--<label for="chkbox2" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">-->
+                <!--<input type="checkbox" id="chkbox2" class="mdl-checkbox__input">-->
+                <!--<span class="mdl-checkbox__label">Views per object</span>-->
+                <!--</label>-->
+                <!--</li>-->
+                <!--<li>-->
+                <!--<label for="chkbox3" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">-->
+                <!--<input type="checkbox" id="chkbox3" class="mdl-checkbox__input">-->
+                <!--<span class="mdl-checkbox__label">Objects selected</span>-->
+                <!--</label>-->
+                <!--</li>-->
+                <!--<li>-->
+                <!--<label for="chkbox4" class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect">-->
+                <!--<input type="checkbox" id="chkbox4" class="mdl-checkbox__input">-->
+                <!--<span class="mdl-checkbox__label">Objects viewed</span>-->
+                <!--</label>-->
+                <!--</li>-->
+                <!--</ul>-->
+                <!--</div>-->
+                <!--<div class="mdl-card__actions mdl-card&#45;&#45;border">-->
+                <!--<a href="#" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-color-text&#45;&#45;blue-grey-50">Change location</a>-->
+                <!--<div class="mdl-layout-spacer"></div>-->
+                <!--<i class="material-icons">location_on</i>-->
+                <!--</div>-->
+                <!--</div>-->
+            </div>
+        </div>
+
+        <!-- Colored FAB button with ripple -->
+        <button id="add_page_fab"
+                class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored">
+            <i class="material-icons">add</i>
+        </button>
+    </main>
+</div>
+<!--<link rel="import" href="parts/end_svgs.html">-->
+<!--<a href="https://github.com/google/material-design-lite/blob/mdl-1.x/templates/dashboard/" target="_blank" id="view-source" class="mdl-button mdl-js-button mdl-button&#45;&#45;raised mdl-js-ripple-effect mdl-button&#45;&#45;colored mdl-color-text&#45;&#45;white">View Source</a>-->
+<!--<link rel="import" href="parts/end_scripts.html">-->
+<script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+</body>
+</html>
